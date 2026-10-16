@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyNote</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: var(--app-font, 'Montserrat'), system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            height: 100vh;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background: #252525;
+            border-right: 1px solid #333333;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            position: relative;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .sidebar h2 { 
+            font-size: 18px; 
+            margin-top: 0; 
+            margin-bottom: 12px; 
+            color: #ffffff;
+        }
+        
+        .new-dropdown-container {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .btn-new-main {
+            background: #3b3b3b;
+            color: #ffffff;
+            border: 1px solid #4a4a4a;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            flex-grow: 1;
+            font-family: inherit;
+            font-size: 13px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .btn-new-main:hover { background: #454545; border-color: #5a5a5a; }
+        .select-new-type {
+            background: #3b3b3b;
+            color: #ffffff;
+            border: 1px solid #4a4a4a;
+            padding: 10px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        .select-new-type:focus { outline: none; border-color: #666; }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+        .search-input:focus { outline: none; border-color: #666; }
+
+        .note-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 50px;
+        }
+        .note-item {
+            padding: 10px 12px;
+            background: #2d2d2d;
+            border: 1px solid #383838;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #b0b0b0;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .note-item:hover { background: #363636; color: #e0e0e0; }
+        .note-item.active {
+            border-color: #666666;
+            background: #383838;
+            color: #ffffff;
+            font-weight: 500;
+        }
+        .note-item.folder-item {
+            background: #232323;
+            border-style: dashed;
+            font-weight: 600;
+            color: #d0d0d0;
+        }
+        .note-title-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+        .item-badge {
+            font-size: 10px;
+            background: #3a3a3a;
+            color: #888;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-right: 6px;
+            text-transform: uppercase;
+        }
+        .btn-del {
+            background: none;
+            border: none;
+            color: #a0a0a0;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .btn-del:hover { background: rgba(255, 255, 255, 0.08); color: #ff6b6b; }
+
+        /* Settings Gear Button */
+        .settings-container {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+        }
+        .btn-settings {
+            background: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            color: #b0b0b0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s, transform 0.2s;
+        }
+        .btn-settings:hover { background: #383838; color: #ffffff; transform: rotate(30deg); }
+        .btn-settings svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .settings-menu {
+            position: fixed;
+            bottom: 65px;
+            left: 15px;
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            border-radius: 8px;
+            padding: 12px;
+            width: 230px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 9999;
+        }
+        .settings-menu.open { display: flex; }
+        .settings-menu label { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .settings-menu select, .settings-menu input {
+            background: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #444;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-family: inherit;
+            width: 100%;
+            font-size: 12px;
+        }
+        .settings-menu select:focus, .settings-menu input:focus { outline: none; border-color: #666; }
+
+        /* Main Content Area Layout */
+        .main-content {
+            flex-grow: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            max-width: calc(100vw - 260px);
+            height: 100vh;
+        }
+        .meta-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        input#noteTitle {
+            flex-grow: 1;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 10px 14px;
+            background: #252525;
+            color: #ffffff;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .editor-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        
+        /* Perfectly Synced Split Backdrop Editor */
+        .editor-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #252525;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .editor-wrapper:focus-within { border-color: #666666; }
+
+        textarea.note-textarea {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 14px;
+            font-size: 16px;
+            line-height: 1.6;
+            background: transparent;
+            color: transparent;
+            caret-color: #e0e0e0;
+            border: none;
+            resize: none;
+            font-family: inherit;
+            z-index: 2;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        textarea.note-textarea:focus { outline: none; }
+
+        .editor-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 14px;
+            font-size: 16px;
+            line-height: 1.6;
+            background: transparent;
+            color: #e0e0e0;
+            pointer-events: none;
+            z-index: 1;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+        .editor-backdrop strong { font-weight: bold; color: #ffffff; }
+        .editor-backdrop em { font-style: italic; color: #81e6d9; }
+        
+        /* Interactive Canvas Workspace */
+        .canvas-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: #151515;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        .canvas-container:active { cursor: grabbing; }
+
+        .canvas-world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6000px;
+            height: 6000px;
+            transform-origin: 0 0;
+        }
+
+        .canvas-svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .canvas-nodes-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .canvas-toolbar {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        .canvas-btn {
+            background: #2d2d2d;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        .canvas-btn:hover { background: #383838; color: #fff; }
+
+        /* Node Card */
+        .canvas-node {
+            position: absolute;
+            background: #282828;
+            border: 1px solid #444;
+            border-radius: 8px;
+            width: 160px;
+            padding: 12px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+        }
+        .canvas-node.picked-up {
+            border-color: #3182ce;
+            box-shadow: 0 8px 24px rgba(49, 130, 206, 0.5);
+        }
+        .canvas-node.connecting {
+            border-color: #d69e2e;
+            box-shadow: 0 8px 24px rgba(214, 158, 46, 0.5);
+        }
+        .canvas-node.selected {
+            border-color: #e53e3e;
+        }
+
+        .canvas-node-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            text-align: center;
+        }
+
+        input#noteTitle:focus {
+            outline: none;
+            border-color: #666666;
+        }
+        #status {
+            font-size: 12px;
+            color: #777777;
+            height: 18px;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body onkeydown="handleGlobalKeyDown(event)">
+
+    <div class="sidebar">
+        <h2>Notes & Maps</h2>
+        <div class="new-dropdown-container">
+            <button class="btn-new-main" onclick="createNewItem()">+ New</button>
+            <select class="select-new-type" id="newItemType">
+                <option value="note">Note</option>
+                <option value="map">Mind Map</option>
+                <option value="folder">Folder</option>
+            </select>
+        </div>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search notes..." oninput="handleSearch()">
+        <ul class="note-list" id="noteList"></ul>
+        
+        <!-- Settings Gear Button -->
+        <div class="settings-container">
+            <button class="btn-settings" onclick="toggleSettings(event)" title="Settings">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58c-0.05,0.3-0.07,0.62-0.07,0.94s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c-0.12,0.22-0.37,0.29-0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.11-0.2,0.06-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div class="settings-menu" id="settingsMenu">
+        <label for="fontSelect">Font Family</label>
+        <select id="fontSelect" onchange="changeFont(this.value)">
+            <option value="'Montserrat', sans-serif">Montserrat</option>
+            <option value="'Plus Jakarta Sans', sans-serif">Google Sans</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Impact, sans-serif">Impact</option>
+            <option value="'Courier New', monospace">Courier New</option>
+        </select>
+        
+        <label for="apiKeyInput" style="margin-top: 4px;">OpenRouter API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-or-v1-..." oninput="saveApiKey(this.value)">
+    </div>
+    
+    <div class="main-content">
+        <div class="meta-container">
+            <input type="text" id="noteTitle" placeholder="Title" oninput="updateTitle()">
+        </div>
+        <div id="status">Saved.</div>
+        
+        <div class="editor-container">
+            <div id="editorWrapper" class="editor-wrapper">
+                <div id="editorBackdrop" class="editor-backdrop"></div>
+                <textarea id="noteBox" class="note-textarea" placeholder="Type notes here... Type ?your question and press Enter for AI, or math like 2^3=" oninput="handleEditorInput()" onscroll="syncScroll()" onkeydown="handleShortcuts(event)"></textarea>
+            </div>
+            
+            <div class="canvas-container" id="canvasContainer" 
+                 onmousedown="handleCanvasMouseDown(event)" 
+                 onwheel="handleCanvasWheel(event)" 
+                 onclick="handleCanvasClick(event)"
+                 ondblclick="handleCanvasDblClick(event)">
+                <div class="canvas-toolbar">
+                    <button class="canvas-btn" onclick="addCanvasNode(event)">+ Add Node</button>
+                </div>
+                <div class="canvas-world" id="canvasWorld">
+                    <svg class="canvas-svg-layer" id="canvasSvgLayer"></svg>
+                    <div class="canvas-nodes-layer" id="canvasNodesLayer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const box = document.getElementById('noteBox');
+        const editorBackdrop = document.getElementById('editorBackdrop');
+        const editorWrapper = document.getElementById('editorWrapper');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const canvasWorld = document.getElementById('canvasWorld');
+        const canvasNodesLayer = document.getElementById('canvasNodesLayer');
+        const canvasSvgLayer = document.getElementById('canvasSvgLayer');
+        const titleInput = document.getElementById('noteTitle');
+        const listContainer = document.getElementById('noteList');
+        const searchInput = document.getElementById('searchInput');
+        const newItemTypeSelect = document.getElementById('newItemType');
+        const status = document.getElementById('status');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const fontSelect = document.getElementById('fontSelect');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        let notes = JSON.parse(localStorage.getItem('myMultiNotes')) || {};
+        let activeNoteId = localStorage.getItem('activeNoteId') || '';
+        let currentFont = localStorage.getItem('myNoteFont') || "'Montserrat', sans-serif";
+        let openRouterApiKey = localStorage.getItem('openRouterApiKey') || '';
+        
+        let pickedUpNodeId = null;
+        let connectingSourceId = null;
+        let selectedNodeId = null;
+
+        // Canvas Pan & Zoom State
+        let panX = 0;
+        let panY = 0;
+        let zoomLevel = 1;
+        let isPanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        applyFont(currentFont);
+        fontSelect.value = currentFont;
+        apiKeyInput.value = openRouterApiKey;
+
+        if (Object.keys(notes).length === 0) {
+            createNewItem("note", "First Note");
+        } else {
+            if (!notes[activeNoteId]) {
+                activeNoteId = Object.keys(notes)[0];
+            }
+            renderSidebar();
+            loadActiveNote();
+        }
+
+        function createNewItem(typeOverride, customTitle) {
+            const type = typeOverride || newItemTypeSelect.value;
+            let defaultTitle = customTitle;
+            let defaultBody = "";
+
+            if (type === 'map') {
+                defaultTitle = defaultTitle || 'Untitled Map';
+                const defaultCanvasData = {
+                    nodes: [
+                        { id: 'node_1', text: 'Central Idea', x: 800, y: 600 },
+                        { id: 'node_2', text: 'Topic A', x: 550, y: 450 },
+                        { id: 'node_3', text: 'Topic B', x: 1050, y: 450 }
+                    ],
+                    connections: [
+                        { from: 'node_1', to: 'node_2' },
+                        { from: 'node_1', to: 'node_3' }
+                    ]
+                };
+                defaultBody = JSON.stringify(defaultCanvasData);
+            } else if (type === 'folder') {
+                defaultTitle = defaultTitle || 'New Folder';
+                defaultBody = 'folder';
+            } else {
+                defaultTitle = defaultTitle || 'Untitled Note';
+                defaultBody = '';
+            }
+            
+            const id = 'item_' + Date.now();
+            notes[id] = { type: type, title: defaultTitle, body: defaultBody };
+            activeNoteId = id;
+            saveToStorage();
+            renderSidebar(searchInput.value);
+            loadActiveNote();
+            if (type !== 'folder') titleInput.focus();
+        }
+
+        function loadActiveNote() {
+            if (!activeNoteId || !notes[activeNoteId]) return;
+            const currentItem = notes[activeNoteId];
+            
+            titleInput.value = currentItem.title;
+            box.value = currentItem.body || '';
+            updateBackdrop(box.value);
+            
+            pickedUpNodeId = null;
+            connectingSourceId = null;
+            selectedNodeId = null;
+            
+            if (currentItem.type === 'map') {
+                editorWrapper.style.display = 'none';
+                canvasContainer.style.display = 'block';
+                renderCanvas();
+                centerCanvasView();
+            } else {
+                editorWrapper.style.display = 'block';
+                canvasContainer.style.display = 'none';
+            }
+            
+            document.querySelectorAll('.note-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.id === activeNoteId);
+            });
+        }
+
+        function updateTitle() {
+            if (!activeNoteId) return;
+            notes[activeNoteId].title = titleInput.value || "Untitled";
+            showSaving();
+            saveToStorage();
+            renderSidebar(searchInput.value);
+        }
+
+        function parseCustomMarkdown(text) {
+            let safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            safe = safe.replace(/~(.*?)~/g, '<em>$1</em>');
+            return safe;
+        }
+
+        function updateBackdrop(text) {
+            editorBackdrop.innerHTML = parseCustomMarkdown(text);
+        }
+
+        function syncScroll() {
+            editorBackdrop.scrollTop = box.scrollTop;
+            editorBackdrop.scrollLeft = box.scrollLeft;
+        }
+
+        function saveApiKey(val) {
+            openRouterApiKey = val.trim();
+            localStorage.setItem('openRouterApiKey', openRouterApiKey);
+        }
+
+        // Shortcuts Handler: Math triggers on Tab/Space, AI Query triggers safely on Enter
+        async function handleShortcuts(e) {
+            const cursorPosition = box.selectionStart;
+            const textBeforeCursor = box.value.substring(0, cursorPosition);
+            const lastNewline = textBeforeCursor.lastIndexOf('\n');
+            const currentLine = textBeforeCursor.substring(lastNewline + 1).trim();
+
+            // 1. AI Query: Triggered when pressing Enter on a line starting with '?'
+            if (e.key === 'Enter') {
+                if (currentLine.startsWith('?')) {
+                    e.preventDefault();
+                    if (!openRouterApiKey) {
+                        alert("Please enter your OpenRouter API Key in TinyNote settings (gear icon) first!");
+                        return;
+                    }
+
+                    const promptText = currentLine.substring(1).trim();
+                    if (!promptText) return;
+
+                    // Insert newline and loading state
+                    const loadingText = `\n~[Thinking...]~`;
+                    box.value = box.value.substring(0, cursorPosition) + loadingText + box.value.substring(cursorPosition);
+                    const loadStart = cursorPosition + 1;
+                    const loadEnd = loadStart + loadingText.length - 1;
+                    handleEditorInput();
+
+                    try {
+                        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${openRouterApiKey}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                model: "dots-studio/dots-3-note-preview:free",
+                                messages: [{ role: "user", content: promptText }]
+                            })
+                        });
+
+                        const data = await response.json();
+                        const aiAnswer = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content.trim() : "No answer received.";
+
+                        const formattedAnswer = `~${aiAnswer}~`;
+                        const currentVal = box.value;
+                        box.value = currentVal.substring(0, loadStart) + formattedAnswer + currentVal.substring(loadEnd);
+                        box.selectionStart = box.selectionEnd = loadStart + formattedAnswer.length;
+                        handleEditorInput();
+                    } catch (err) {
+                        box.value = box.value.replace("~[Thinking...]~", "~[Error fetching AI response]~");
+                        handleEditorInput();
+                    }
+                    return;
+                }
+            }
+
+            // 2. Math Solver: Triggered when pressing Space or Tab after an equation ending in '='
+            if (e.key === ' ' || e.key === 'Tab') {
+                const mathMatch = currentLine.match(/([0-9\.\+\-\*\/\(\)\^\s]+|sqrt\([0-9\.\+\-\*\/\(\)\^\s]+\))=$/);
+                if (mathMatch) {
+                    try {
+                        let expr = mathMatch[1].trim()
+                            .replace(/\^/g, '**')
+                            .replace(/sqrt\(/g, 'Math.sqrt(');  if (/^[0-9\.\+\-\*\/\(\)\s\*\*Math\.sqrt]+$/.test(expr)) {
+                            let result = Function('"use strict";return (' + expr + ')')();
+                            if (result !== undefined && !isNaN(result)) {
+                                e.preventDefault();
+                                const addition = ` ~${result}~`;
+                                box.value = box.value.substring(0, cursorPosition) + addition + box.value.substring(cursorPosition);
+                                box.selectionStart = box.selectionEnd = cursorPosition + addition.length;
+                                handleEditorInput();
+                            }
+                        }
+                    } catch (err) {}
+                }
+            }
+        }
+
+        function handleEditorInput() {
+            if (!activeNoteId || notes[activeNoteId].type === 'map') return;
+            const val = box.value;
+            notes[activeNoteId].body = val;
+            updateBackdrop(val);
+            showSaving();
+            saveToStorage();
+        }
+
+        function switchNote(id) {
+            activeNoteId = id;
+            localStorage.setItem('activeNoteId', id);
+            loadActiveNote();
+        }
+
+        function deleteNote(id, event) {
+            event.stopPropagation();
+            if (confirm("Delete this item?")) {
+                delete notes[id];
+                saveToStorage();
+                
+                if (activeNoteId === id) {
+                    const remainingIds = Object.keys(notes);
+                    activeNoteId = remainingIds.length ? remainingIds[0] : '';
+                }
+                
+                if (!activeNoteId) {
+                    createNewItem("note");
+                } else {
+                    renderSidebar(searchInput.value);
+                    loadActiveNote();
+                }
+            }
+        }
+
+        function renderSidebar(filter = "") {
+            listContainer.innerHTML = '';
+            const query = filter.toLowerCase();
+
+            Object.keys(notes).forEach(id => {
+                const item = notes[id];
+                if (query && !item.title.toLowerCase().includes(query)) return;
+
+                const li = document.createElement('li');
+                li.className = `note-item ${id === activeNoteId ? 'active' : ''} ${item.type === 'folder' ? 'folder-item' : ''}`;
+                li.dataset.id = id;
+                li.onclick = () => switchNote(id);
+
+                const badge = document.createElement('span');
+                badge.className = 'item-badge';
+                badge.textContent = item.type === 'map' ? 'Map' : (item.type === 'folder' ? 'Folder' : 'Note');
+
+                const span = document.createElement('span');
+                span.className = 'note-title-text';
+                span.textContent = item.title;
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-del';
+                delBtn.textContent = '✕';
+                delBtn.onclick = (e) => deleteNote(id, e);
+
+                li.appendChild(badge);
+                li.appendChild(span);
+                li.appendChild(delBtn);
+                listContainer.appendChild(li);
+            });
+        }
+
+        function handleSearch() {
+            renderSidebar(searchInput.value);
+        }
+
+        function centerCanvasView() {
+            panX = (canvasContainer.clientWidth / 2) - 800;
+            panY = (canvasContainer.clientHeight / 2) - 600;
+            zoomLevel = 1;
+            updateTransform();
+        }
+
+        function updateTransform() {
+            canvasWorld.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+        }
+
+        // --- Canvas Panning, Zooming & Double-Click Spawning ---
+        function handleCanvasMouseDown(e) {
+            if (e.button === 1) {
+                e.preventDefault();
+                isPanning = true;
+                startPanX = e.clientX - panX;
+                startPanY = e.clientY - panY;
+
+                function onMouseMove(moveEvent) {
+                    if (!isPanning) return;
+                    panX = moveEvent.clientX - startPanX;
+                    panY = moveEvent.clientY - startPanY;
+                    updateTransform();
+                }
+
+                function onMouseUp() {
+                    isPanning = false;
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            }
+        }
+
+        function handleCanvasWheel(e) {
+            e.preventDefault();
+            const zoomIntensity = 0.1;
+            const prevZoom = zoomLevel;
+
+            if (e.deltaY < 0) {
+                zoomLevel += zoomIntensity;
+            } else {
+                zoomLevel -= zoomIntensity;
+            }
+
+            zoomLevel = Math.max(0.3, Math.min(3.0, zoomLevel));
+
+            const rect = canvasContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            panX = mouseX - (mouseX - panX) * (zoomLevel / prevZoom);
+            panY = mouseY - (mouseY - panY) * (zoomLevel / prevZoom);
+
+            updateTransform();
+        }
+
+        function handleCanvasDblClick(e) {
+            if (e.target === canvasContainer || e.target === canvasWorld || e.target === canvasSvgLayer) {
+                const rect = canvasContainer.getBoundingClientRect();
+                const clickX = (e.clientX - rect.left - panX) / zoomLevel - 80;
+                const clickY = (e.clientY - rect.top - panY) / zoomLevel - 30;
+
+                const data = getCanvasData();
+                const newNode = {
+                    id: 'node_' + Date.now(),
+                    text: 'New Topic',
+                    x: clickX,
+                    y: clickY
+                };
+                data.nodes.push(newNode);
+                saveCanvasData(data);
+                renderCanvas();
+            }
+        }
+
+        // --- Canvas Engine ---
+        function getCanvasData() {
+            try {
+                let parsed = JSON.parse(notes[activeNoteId].body);
+                if (parsed && parsed.nodes) return parsed;
+            } catch (e) {}
+            return { nodes: [], connections: [] };
+        }
+
+        function saveCanvasData(data) {
+            notes[activeNoteId].body = JSON.stringify(data, null, 2);
+            showSaving();
+            saveToStorage();
+        }
+
+        function handleCanvasClick(e) {
+            if (pickedUpNodeId && (e.target === canvasContainer || e.target === canvasWorld || e.target === canvasSvgLayer)) {
+                const rect = canvasContainer.getBoundingClientRect();
+                const clickX = (e.clientX - rect.left - panX) / zoomLevel - 80;
+                const clickY = (e.clientY - rect.top - panY) / zoomLevel - 30;
+
+                const data = getCanvasData();
+                const node = data.nodes.find(n => n.id === pickedUpNodeId);
+                if (node) {
+                    node.x = clickX;
+                    node.y = clickY;
+                    saveCanvasData(data);
+                }
+                pickedUpNodeId = null;
+                renderCanvas();
+            } else if (e.target === canvasContainer || e.target === canvasWorld || e.target === canvasSvgLayer) {
+                selectedNodeId = null;
+                renderCanvas();
+            }
+        }
+
+        function handleGlobalKeyDown(e) {
+            if (e.key === 'Delete' && selectedNodeId && notes[activeNoteId]?.type === 'map' && document.activeElement.tagName !== 'INPUT') {
+                const data = getCanvasData();
+                data.nodes = data.nodes.filter(n => n.id !== selectedNodeId);
+                data.connections = data.connections.filter(c => c.from !== selectedNodeId && c.to !== selectedNodeId);
+                saveCanvasData(data);
+                selectedNodeId = null;
+                renderCanvas();
+            }
+        }
+
+        function renderCanvas() {
+            canvasNodesLayer.innerHTML = '';
+            canvasSvgLayer.innerHTML = '';
+            const data = getCanvasData();
+
+            // Render Connections
+            data.connections.forEach(conn => {
+                const fromNode = data.nodes.find(n => n.id === conn.from);
+                const toNode = data.nodes.find(n => n.id === conn.to);
+                if (fromNode && toNode) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', fromNode.x + 80);
+                    line.setAttribute('y1', fromNode.y + 30);
+                    line.setAttribute('x2', toNode.x + 80);
+                    line.setAttribute('y2', toNode.y + 30);
+                    line.setAttribute('stroke', '#666');
+                    line.setAttribute('stroke-width', '2');
+                    canvasSvgLayer.appendChild(line);
+                }
+            });
+
+            // Render Nodes
+            data.nodes.forEach(node => {
+                const card = document.createElement('div');
+                card.className = 'canvas-node';
+                if (pickedUpNodeId === node.id) card.classList.add('picked-up');
+                if (connectingSourceId === node.id) card.classList.add('connecting');
+                if (selectedNodeId === node.id) card.classList.add('selected');
+
+                card.style.left = node.x + 'px';
+                card.style.top = node.y + 'px';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'canvas-node-input';
+                input.value = node.text;
+                input.oninput = () => {
+                    node.text = input.value;
+                    saveCanvasData(data);
+                };
+
+                card.appendChild(input);
+
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    selectedNodeId = node.id;
+
+                    if (!pickedUpNodeId) {
+                        pickedUpNodeId = node.id;
+                    } else if (pickedUpNodeId === node.id) {
+                        pickedUpNodeId = null;
+                    }
+                    renderCanvas();
+                };
+
+                card.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (!connectingSourceId) {
+                        connectingSourceId = node.id;
+                        renderCanvas();
+                    } else if (connectingSourceId === node.id) {
+                        connectingSourceId = null;
+                        renderCanvas();
+                    } else {
+                        if (!data.connections.some(c => (c.from === connectingSourceId && c.to === node.id) || (c.from === node.id && c.to === connectingSourceId))) {
+                            data.connections.push({ from: connectingSourceId, to: node.id });
+                            saveCanvasData(data);
+                        }
+                        connectingSourceId = null;
+                        renderCanvas();
+                    }
+                };
+
+                canvasNodesLayer.appendChild(card);
+            });
+        }
+
+        function addCanvasNode(e) {
+            e.stopPropagation();
+            const data = getCanvasData();
+            const newNode = {
+                id: 'node_' + Date.now(),
+                text: 'New Topic',
+                x: 800 - panX + (canvasContainer.clientWidth / 2) - 80,
+                y: 600 - panY + (canvasContainer.clientHeight / 2) - 30
+            };
+            data.nodes.push(newNode);
+            saveCanvasData(data);
+            renderCanvas();
+        }
+
+        function toggleSettings(event) {
+            event.stopPropagation();
+            settingsMenu.classList.toggle('open');
+        }
+
+        function changeFont(fontValue) {
+            applyFont(fontValue);
+            localStorage.setItem('myNoteFont', fontValue);
+        }
+
+        function applyFont(fontValue) {
+            currentFont = fontValue;
+            document.documentElement.style.setProperty('--app-font', fontValue);
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.settings-container') && !event.target.closest('.settings-menu')) {
+                settingsMenu.classList.remove('open');
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('myMultiNotes', JSON.stringify(notes));
+            localStorage.setItem('activeNoteId', activeNoteId);
+        }
+
+        let saveTimeout;
+        function showSaving() {
+            status.textContent = "Saving...";
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                status.textContent = "Saved.";
+            }, 500);
+        }
+    </script>
+</body>
+</html>
